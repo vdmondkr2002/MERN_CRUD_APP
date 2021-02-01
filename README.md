@@ -5,7 +5,7 @@
 * [Setup](#setup)
 
 ## General info
-This project is simple Lorem ipsum dolor generator.
+This project is simple CRUD app in which we can create, update and delete memories.
 	
 ## Tech Stack Used:
 * Front-end: React-redux
