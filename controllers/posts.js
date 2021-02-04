@@ -1,4 +1,3 @@
-const { response } = require('express')
 const mongoose = require('mongoose')
 const PostMessage = require('../models/Post')
 
@@ -11,9 +10,10 @@ exports.getPosts = async(req,res)=>{
         return res.status(404).json({message:err.message})
     }
 }
+
 exports.createPost = async(req,res)=>{
     const post = req.body
-    const newPost = new PostMessage(post)
+    const newPost = new PostMessage({...post,creator:req.userId,createdAt:new Date().toISOString()})
     try{
         await newPost.save()
         return res.status(201).json(newPost)
@@ -49,12 +49,23 @@ exports.deletePost = async(req,res)=>{
 exports.likePost = async(req,res)=>{
     const {id} = req.params
 
+    if(!req.userId)
+        return res.status(403).json({msg:"Unauthorized"})
+
     if(!mongoose.Types.ObjectId.isValid(id))
         return res.status(404).send(`No post with id:${id}`)
 
     const post = await PostMessage.findById(id)
 
-    const updatedPost = await PostMessage.findByIdAndUpdate(id,{likeCount:post.likeCount+1},{new:true})
+    const userId = post.likes.findIndex(id=>id===String(req.userId)) //check whether that person has already liked the post
+
+    if(userId==-1){         //if not
+        post.likes.push(req.userId)
+    }else{                  //if he has liked it already remove the like
+        post.likes = post.likes.filter(id=>id!==String(req.userId))
+    }
+
+    const updatedPost = await PostMessage.findByIdAndUpdate(id,post,{new:true})
 
     res.json(updatedPost)
     
